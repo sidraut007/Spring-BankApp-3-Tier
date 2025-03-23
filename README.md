@@ -92,3 +92,4 @@ docker compose up -d
 > [!Important]
 > If you face issues with exiting docker container while running docker compose, run ``` docker compose down``` and then ``` docker compose up -d ```.
 #
+# Spring-BankApp
