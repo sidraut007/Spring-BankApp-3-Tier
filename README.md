@@ -1,3 +1,4 @@
+# Spring-BankApp
 ## End-to-End Bank Application Deployment using DevSecOps on AWS EKS
 - This is a multi-tier bank an application written in Java (Springboot).
 
@@ -92,4 +93,4 @@ docker compose up -d
 > [!Important]
 > If you face issues with exiting docker container while running docker compose, run ``` docker compose down``` and then ``` docker compose up -d ```.
 #
-# Spring-BankApp
+
