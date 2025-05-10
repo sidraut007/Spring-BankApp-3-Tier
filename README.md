@@ -74,7 +74,7 @@
   ### Congratulations, you have deployed the application using Docker 
   #
 - **<p id="dockercompose">Deployment using Docker compose</p>**
-- Install docker compose
+ Install docker compose
 ```bash
 sudo apt update
 sudo apt install docker-compose-v2 -y
@@ -93,11 +93,9 @@ docker compose up -d
 > If you face issues with exiting docker container while running docker compose, run ``` docker compose down``` and then ``` docker compose up -d ```.
 #
 
-##  Deployment Using Kubernetes
-
 - **<p id="kubernetes">Deployment using kubernetes</p>**
   
-  - Move to the K8s/manifest
+  Move to the K8s/manifest
   ```bash
   cd Spring-BankApp-3-Tier/K8s/manifest
   ```
