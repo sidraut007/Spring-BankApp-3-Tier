@@ -6,8 +6,8 @@ pipeline {
     }
 
     tools {
-        maven 'Maven3' // Specify your Maven version
-        jdk 'JDK 17'        // Specify your JDK version
+        maven 'Maven3' 
+        jdk 'JDK 17'   
     }
 
     environment {
@@ -96,7 +96,7 @@ pipeline {
                 script {
                     withDockerRegistry(credentialsId: 'docker-cred') {
                         sh "docker push ${IMAGE_NAME}:${TAG}"
-                    }
+                }
             }
         }
 
