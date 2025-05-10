@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   mysql:
-    image: mysql:5.7
+    image: mysql:8.0
     container_name: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=Test@123
@@ -18,7 +18,7 @@ services:
       start_period: 30s
 
   mainapp:
-    build: .
+    image: sidraut007/spring-bankapp
     container_name: Bankapp
     environment:
       - SPRING_DATASOURCE_USERNAME=root
@@ -32,12 +32,9 @@ services:
     networks:
       - bankapp
     restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
+    
 networks:
   bankapp:
+    name: bankapp
+    driver: bridge
+    

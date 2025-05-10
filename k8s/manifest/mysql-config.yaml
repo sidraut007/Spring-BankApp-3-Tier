@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+  namespace: default
+data:
+  MYSQL_DATABASE: bankapp  #Database name
