@@ -1,0 +1,106 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'DOCKER_TAG', choices: ['blue', 'green'], description: 'Choose the Docker image tag for the deployment')
+    }
+
+    tools {
+        maven 'Maven3' // Specify your Maven version
+        jdk 'JDK 17'        // Specify your JDK version
+    }
+
+    environment {
+       SCANNER_HOME= tool 'sonar-scanner' 
+       IMAGE_NAME = "sidraut007/spring-bankapp"
+       TAG = "${params.DOCKER_TAG}"
+    }
+
+    stages {
+
+        stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/sidraut007/Spring-BankApp-3-Tier.git'
+            }
+        }
+
+        stage('Maven compile') {
+            steps {
+                script {
+                    sh 'mvn compile'
+                }
+            }
+        }  
+
+        stage('maven test') {
+            steps {
+                script {
+                    sh 'mvn test'
+                }
+            }
+        }
+
+        stage('trivy fs scan') {
+            steps{
+                sh 'trivy fs --format -o file-scan-report.html .'
+            }
+
+        }
+        
+        stage('SonarQube Scan') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=bankapp \
+                    -Dsonar.projectName=bankapp -Dsonar.java.binaries=target '''
+                }
+            }
+        }
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                script {
+                    timeout(time: 10, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: false credentialsId: 'sonar-token'
+                    }
+                }
+            }
+        }
+
+        stage('Maven install') {
+            steps {
+                script {
+                    sh 'mvn clean install -DskipTests=true'
+                }
+            }
+        }
+        
+        stage('publish Artifact to Nexus ') {
+            steps {
+                script {
+                    sh 'mvn deploy'
+                }
+            }
+        }
+
+        stage('Docker Build & Tag') {
+            steps {
+                script {
+                    sh "docker build -t ${IMAGE_NAME}:${TAG} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred') {
+                        sh "docker push ${IMAGE_NAME}:${TAG}"
+                    }
+            }
+        }
+
+
+
+    }
+}

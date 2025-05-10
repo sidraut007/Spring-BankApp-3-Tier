@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/sidraut007/Spring-BankApp-3-Tier.git'
+            }
+        }
+
+        
+
+        }
+    }
+}    
+
+        
