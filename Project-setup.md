@@ -69,6 +69,7 @@ docker-compose up -d
 
 ### 4. ⚙️ Jenkins CI Pipeline 
 - write complete jenkis declarative pipeline 
+
     - Add your Jenkinsfile in the root of the repo.
     - Set SCM to Git, using your repository URL.
 
