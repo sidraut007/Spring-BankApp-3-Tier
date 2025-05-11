@@ -1,4 +1,4 @@
-# 🛠 Spring BankApp CI/CD Pipeline Setup (Jenkins + SonarQube + Nexus)
+## 🛠 Spring BankApp CI/CD Pipeline Setup (Jenkins + SonarQube + Nexus)
 
 This guide explains how to set up a full DevOps CI/CD pipeline using **Jenkins**, **SonarQube**, and **Nexus** with Docker. It automates build, test, code quality analysis, artifact upload, Docker image build, and deployment.
 
