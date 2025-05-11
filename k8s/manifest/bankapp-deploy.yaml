@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: bankapp
-          image: sidraut007/spring-bankapp           
+          image: sidraut007/spring-bankapp:blue
           ports:
             - containerPort: 8080
           env:
