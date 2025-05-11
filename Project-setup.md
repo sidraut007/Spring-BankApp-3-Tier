@@ -60,10 +60,10 @@ docker-compose up -d
 
 - Add required credentials:
 
-    GitHub (Personal Access Token)
-    DockerHub (username/password)
-    SonarQube token
-    Nexus user credentials #in global maven setting
+    - GitHub (Personal Access Token)
+    - DockerHub (username/password)
+    - SonarQube token
+    - Nexus user credentials #in global maven setting
 
 ---
 
@@ -78,7 +78,7 @@ docker-compose up -d
 - Login to SonarQube as admin/admin
 
 - Configure a webhook under:
-        Project Settings → General → Webhooks
+    - Project Settings → General → Webhooks
     
     ```
     http://jenkins:8080/sonar-webhook/
@@ -92,11 +92,11 @@ docker-compose up -d
 ---
 
 ### 6. 📦 Nexus Repository Setup
-- Login to Nexus at http://localhost:8081 as admin.
-- Create a Maven hosted repository (e.g., maven-releases).
-- Add this to your pom.xml:
+    - Login to Nexus at http://localhost:8081 as admin.
+    - Create a Maven hosted repository (e.g., maven-releases).
+    - Add this to your pom.xml:
 
-``bash
+```bash
 
     <distributionManagement>
     <repository>
