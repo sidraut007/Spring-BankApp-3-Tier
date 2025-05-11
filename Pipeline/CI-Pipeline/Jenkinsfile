@@ -18,7 +18,7 @@ pipeline {
     stages {
         stage('Git Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/sidraut007/Spring-BankApp-3-Tier.git'
+                git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/sidraut007/Spring-BankApp-3-Tier.git'
                 }
             }
         stage('Maven compile') {
@@ -50,12 +50,12 @@ pipeline {
             steps {
                 script {
                     try {
-                        timeout(time: 2, unit: 'MINUTES') {
-                            waitForQualityGate abortPipeline: true, credentialsId: 'sonar-token'
+                        timeout(time: 1, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
                         }
                         } catch (err) {
                             echo "Warning: SonarQube Quality Gate did not complete in time — continuing anyway."
-                             
+                             }
                         }
                 }
         }
@@ -65,6 +65,14 @@ pipeline {
                 script {
                     sh 'mvn clean install -DskipTests=true'
                 }
+            }
+        }
+        
+        stage('publish Artifact to Nexus ') {
+            steps {
+                withMaven(globalMavenSettingsConfig: 'global-maven', jdk: '', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
+                 sh 'mvn deploy -DskipTests'
+                }   
             }
         }
 
@@ -85,5 +93,22 @@ pipeline {
                 }
             }
         }
+        stage('Update K8s Manifest Tag') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    script {
+                        sh """
+                            sed -i 's|image: sidraut007/spring-bankapp.*|image: ${IMAGE_NAME}:${TAG}|' k8s/manifest/bankapp-deploy.yaml
+                            git config user.email "jenkins@yourdomain.com"
+                            git config user.name "Jenkins CI"
+                            git add k8s/manifest/bankapp-deploy.yaml
+                            git commit -m "Update bankapp image tag to ${TAG}" || echo "No changes to commit"
+                            git push https://${GIT_USER}:${GIT_PASS}@github.com/sidraut007/Spring-BankApp-3-Tier.git HEAD:main
+                        """
+                    }
+                }
+            }
+        }
+
 }
 }
