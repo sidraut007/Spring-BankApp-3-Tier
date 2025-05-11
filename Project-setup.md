@@ -36,12 +36,9 @@ docker-compose up -d
 ```
 
 - This will:
-
-    Run Jenkins at http://localhost:8080
-
-    Run SonarQube at http://localhost:9000
-
-    Run Nexus at http://localhost:8081
+    - Run Jenkins at:   http://localhost:8080
+    - Run SonarQube at: http://localhost:9000
+    - Run Nexus at:     http://localhost:8081
 
 ---
 
