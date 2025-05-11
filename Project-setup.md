@@ -24,6 +24,7 @@ git clone https://github.com/sidraut007/Spring-BankApp-3-Tier.git
 cd Spring-BankApp-3-Tier
 
 ```
+---
 
 ### 2. 🐳 Start the Infrastructure with Docker Compose
 
@@ -41,6 +42,8 @@ docker-compose up -d
     Run SonarQube at http://localhost:9000
 
     Run Nexus at http://localhost:8081
+
+---
 
 ### 3. 👷 Configure Jenkins
 
@@ -62,10 +65,14 @@ docker-compose up -d
     SonarQube token
     Nexus user credentials #in global maven setting
 
+---
+
 ### 4. ⚙️ Add Jenkins Pipeline Job
 
 - Add your Jenkinsfile in the root of the repo.
 - Set SCM to Git, using your repository URL.
+
+---
 
 ### 5. 🧪 Configure SonarQube
 - Login to SonarQube as admin/admin
@@ -81,6 +88,8 @@ docker-compose up -d
     ```
     docker exec -it <sonar-container-name> curl -I http://jenkins:8080/sonar-webhook/
     ```
+
+---
 
 ### 6. 📦 Nexus Repository Setup
 - Login to Nexus at http://localhost:8081 as admin.
