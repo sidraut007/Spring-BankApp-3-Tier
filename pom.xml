@@ -87,4 +87,15 @@
 		</plugins>
 	</build>
 
+	<distributionManagement>
+        <repository>
+            <id>maven-releases</id>
+            <url>http://nexus:8081/repository/maven-releases/</url>   <!-- #nexus is container name -->
+        </repository>
+        <snapshotRepository>
+            <id>maven-snapshots</id>
+            <url>http://nexus:8081/repository/maven-snapshots/</url>  <!-- #nexus is container name -->
+        </snapshotRepository>
+    </distributionManagement>
+
 </project>

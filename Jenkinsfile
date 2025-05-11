@@ -18,7 +18,7 @@ pipeline {
     stages {
         stage('Git Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/sidraut007/Spring-BankApp-3-Tier.git'
+                git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/sidraut007/Spring-BankApp-3-Tier.git'
                 }
             }
         stage('Maven compile') {
@@ -55,7 +55,9 @@ pipeline {
                         }
                         } catch (err) {
                             echo "Warning: SonarQube Quality Gate did not complete in time — continuing anyway."
-                             
+                             // Optionally: mark stage as unstable
+                             currentBuild.result = 'UNSTABLE'
+                             }
                         }
                 }
         }
@@ -64,6 +66,14 @@ pipeline {
             steps {
                 script {
                     sh 'mvn clean install -DskipTests=true'
+                }
+            }
+        }
+        
+        stage('publish Artifact to Nexus ') {
+            steps {
+                script {
+                    sh 'mvn deploy'
                 }
             }
         }
@@ -81,9 +91,9 @@ pipeline {
                 script {
                     withDockerRegistry(credentialsId: 'docker-cred') {
                         sh "docker push ${IMAGE_NAME}:${TAG}"
-                    }
                 }
             }
+        }
         }
 }
 }
