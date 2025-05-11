@@ -92,9 +92,9 @@ docker-compose up -d
 ---
 
 ### 6. 📦 Nexus Repository Setup
-    - Login to Nexus at http://localhost:8081 as admin.
-    - Create a Maven hosted repository (e.g., maven-releases).
-    - Add this to your pom.xml:
+- Login to Nexus at http://localhost:8081 as admin.
+- Create a Maven hosted repository (e.g., maven-releases).
+- Add this to your pom.xml:
 
 ```bash
 
