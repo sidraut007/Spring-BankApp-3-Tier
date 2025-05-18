@@ -7,7 +7,7 @@ services:
       - MYSQL_ROOT_PASSWORD=Test@123
       - MYSQL_DATABASE=BankDB
     volumes:
-      - ./mysql-data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
     networks:
       - bankapp
     healthcheck:
@@ -32,6 +32,9 @@ services:
     networks:
       - bankapp
     restart: always
+volumes:
+  mysql-data:
+    driver: local  
     
 networks:
   bankapp:
