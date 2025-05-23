@@ -145,4 +145,172 @@ kubectl apply -f bankapp-deploy.yaml
 
  - http://localhost:8080
 
+ ## Pipeline
 
+ ![Login diagram](images/Spring-Bankapp-CI.png)
+
+```bash
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'DOCKER_TAG', choices: ['blue', 'green'], description: 'Choose the Docker image tag for the deployment')
+    }
+
+    tools {
+        maven 'maven3' 
+        jdk 'jdk17'
+    }
+
+    environment {
+       SCANNER_HOME= tool 'sonar-scanner' 
+       IMAGE_NAME = "sidraut007/spring-bankapp"
+       TAG = "${params.DOCKER_TAG}"
+    }
+
+    stages {
+        stage('Code Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/sidraut007/Spring-BankApp-3-Tier.git'
+                }
+            }
+        stage('Maven compile') {
+            steps {
+                script {
+                    sh 'mvn compile'
+                }
+            }
+        }  
+
+        stage('Maven test') {
+            steps {
+                script {
+                    sh 'mvn test -DskipTests=true'
+                }
+            }
+        }
+
+        stage('Sonar Scan') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=bankapp \
+                    -Dsonar.projectName=bankapp -Dsonar.java.binaries=target '''
+                }
+            }
+        }
+
+        stage('Sonar Quality Gate') {
+            steps {
+                script {
+                    try {
+                        timeout(time: 1, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                        }
+                        } catch (err) {
+                            echo "Warning: SonarQube Quality Gate did not complete in time — continuing anyway."
+                             }
+                        }
+                }
+        }
+
+        stage('Maven install') {
+            steps {
+                script {
+                    sh 'mvn clean install -DskipTests=true'
+                }
+            }
+        }
+        /*
+        stage('publish Artifact to Nexus ') {
+            steps {
+                withMaven(globalMavenSettingsConfig: 'global-maven', jdk: '', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
+                 sh 'mvn deploy -DskipTests'
+                }   
+            }
+        }
+        */
+
+        stage('Docker Build & Tag') {
+            steps {
+                script {
+                    sh "docker build -t ${IMAGE_NAME}:${TAG} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred') {
+                        sh "docker push ${IMAGE_NAME}:${TAG}"
+                    }
+                }
+            }
+        }
+        stage('Update K8s Manifest Tag') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    script {
+                        sh """
+                            sed -i 's|image: sidraut007/spring-bankapp.*|image: ${IMAGE_NAME}:${TAG}|' k8s/manifest/bankapp-deploy.yaml
+                            git config user.email "jenkins@yourdomain.com"
+                            git config user.name "Jenkins CI"
+                            git add k8s/manifest/bankapp-deploy.yaml
+                            git commit -m "Update bankapp image tag to ${TAG}" || echo "No changes to commit"
+                            git push https://${GIT_USER}:${GIT_PASS}@github.com/sidraut007/Spring-BankApp-3-Tier.git HEAD:main
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to K8s Cluster') {
+            steps {
+                withKubeConfig(
+                    credentialsId: 'k8s-cred',
+                    namespace: 'default',
+                    clusterName: 'kubernetes',
+                    serverUrl: 'https://host.docker.internal:54450'  // Kubernetes API server as im using kind cluster so this is the url 
+                ) {
+                    dir('k8s/manifest/') {
+                        sh '''
+                        kubectl apply -f pv.yaml
+                        kubectl apply -f pvc.yaml
+                        kubectl apply -f mysql-secret.yaml
+                        kubectl apply -f mysql-config.yaml
+                        kubectl apply -f bankapp-secret.yaml
+                        kubectl apply -f bankapp-config.yaml
+                        kubectl apply -f .
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Verify the Deployment') {
+            steps {
+                withKubeConfig(
+                    credentialsId: 'k8s-cred',
+                    namespace: 'default',
+                    clusterName: 'kubernetes',
+                    serverUrl: 'https://host.docker.internal:54450' // Kubernetes Controlplane/API server as im using kind cluster so this is the url 
+                ) {
+                    sh 'kubectl get pods'
+                    sh 'kubectl get svc'
+                }
+            }
+        }
+
+    }
+
+    post {
+            success {
+                echo '✅ Pipeline completed successfully.'
+            }
+            failure {
+                echo '❌ Pipeline failed.'
+            }
+        }
+}
+
+```
