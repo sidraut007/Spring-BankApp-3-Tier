@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+
+  jenkins:
+    image: sidraut007/jenkins
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock  # 🔥 give access to host Docker as The Jenkins container can talk directly to the Docker daemon on the host via this socket.
+    user: root  # needed to run Docker commands
+
+volumes:
+  jenkins_home:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
