@@ -93,65 +93,81 @@ jobs:
           context: .
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ env.TAG }}
-
-  update-k8s-manifest:
-    needs: docker-build-push
-    runs-on: ubuntu-latest
-    env:
-      IMAGE_NAME: sidraut007/spring-bankapp
-      TAG: ${{ github.event.inputs.DOCKER_TAG }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Configure Git for committing changes
+      
+      - name: Pull and run Docker container
         run: |
-          git config user.email "github-actions@github.com"
-          git config user.name "GitHub Actions"
+          docker pull ${IMAGE_NAME}:${TAG}
 
-      - name: Update K8s manifest image tag
-        run: |
-          sed -i 's|image: sidraut007/spring-bankapp.*|image: ${IMAGE_NAME}:${TAG}|' k8s/manifest/bankapp-deploy.yaml
-          git add k8s/manifest/bankapp-deploy.yaml
-          git commit -m "Update bankapp image tag to ${TAG}" || echo "No changes to commit"
+          # Stop any existing container with same name
+          if [ $(docker ps -q -f name=spring-bankapp) ]; then
+            docker stop spring-bankapp
+            docker rm spring-bankapp
+          fi
 
-      - name: Push changes back to main branch
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
+          # Run the container
+          docker run -d --name spring-bankapp -p 8080:8080 ${IMAGE_NAME}:${TAG}
 
-  deploy-to-k8s:
-    needs: update-k8s-manifest
-    runs-on: ubuntu-latest
+      - name: Verify running container
+        run: docker ps -f name=spring-bankapp
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  # update-k8s-manifest:
+  #   needs: docker-build-push
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     IMAGE_NAME: sidraut007/spring-bankapp
+  #     TAG: ${{ github.event.inputs.DOCKER_TAG }}
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      - name: Configure Kubeconfig
-        run: |
-          echo "${{ secrets.KUBECONFIG_DATA }}" > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
+  #     - name: Configure Git for committing changes
+  #       run: |
+  #         git config user.email "github-actions@github.com"
+  #         git config user.name "GitHub Actions"
 
-      - name: Deploy Kubernetes resources
-        working-directory: ./k8s/manifest
-        run: |
-          kubectl apply -f pv.yaml
-          kubectl apply -f pvc.yaml
-          kubectl apply -f mysql-secret.yaml
-          kubectl apply -f mysql-config.yaml
-          kubectl apply -f bankapp-secret.yaml
-          kubectl apply -f bankapp-config.yaml
-          kubectl apply -f .
+  #     - name: Update K8s manifest image tag
+  #       run: |
+  #         sed -i 's|image: sidraut007/spring-bankapp.*|image: ${IMAGE_NAME}:${TAG}|' k8s/manifest/bankapp-deploy.yaml
+  #         git add k8s/manifest/bankapp-deploy.yaml
+  #         git commit -m "Update bankapp image tag to ${TAG}" || echo "No changes to commit"
 
-      - name: Verify Deployment
-        run: |
-          kubectl get pods
-          kubectl get svc
+  #     - name: Push changes back to main branch
+  #       uses: ad-m/github-push-action@v0.6.0
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         branch: main
+
+  # deploy-to-k8s:
+  #   needs: update-k8s-manifest
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: Setup kubectl
+  #       uses: azure/setup-kubectl@v3
+  #       with:
+  #         version: 'latest'
+
+  #     - name: Configure Kubeconfig
+  #       run: |
+  #         echo "${{ secrets.KUBECONFIG_DATA }}" > $HOME/.kube/config
+  #         chmod 600 $HOME/.kube/config
+
+  #     - name: Deploy Kubernetes resources
+  #       working-directory: ./k8s/manifest
+  #       run: |
+  #         kubectl apply -f pv.yaml
+  #         kubectl apply -f pvc.yaml
+  #         kubectl apply -f mysql-secret.yaml
+  #         kubectl apply -f mysql-config.yaml
+  #         kubectl apply -f bankapp-secret.yaml
+  #         kubectl apply -f bankapp-config.yaml
+  #         kubectl apply -f .
+
+  #     - name: Verify Deployment
+  #       run: |
+  #         kubectl get pods
+  #         kubectl get svc
