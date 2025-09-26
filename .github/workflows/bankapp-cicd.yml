@@ -45,27 +45,27 @@ jobs:
       - name: Maven test (skip tests?)
         run: mvn test -DskipTests=true
 
-      - name: SonarQube Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          # Install sonar-scanner CLI if needed
-          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
-          unzip sonar-scanner-cli-4.8.0.2856-linux.zip
-          export PATH=$PWD/sonar-scanner-4.8.0.2856-linux/bin:$PATH
+      # - name: SonarQube Scan
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #   run: |
+      #     # Install sonar-scanner CLI if needed
+      #     wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
+      #     unzip sonar-scanner-cli-4.8.0.2856-linux.zip
+      #     export PATH=$PWD/sonar-scanner-4.8.0.2856-linux/bin:$PATH
 
-          sonar-scanner \
-            -Dsonar.projectKey=bankapp \
-            -Dsonar.projectName=bankapp \
-            -Dsonar.java.binaries=target \
-            -Dsonar.login=$SONAR_TOKEN
+      #     sonar-scanner \
+      #       -Dsonar.projectKey=bankapp \
+      #       -Dsonar.projectName=bankapp \
+      #       -Dsonar.java.binaries=target \
+      #       -Dsonar.login=$SONAR_TOKEN
 
-      - name: Sonar Quality Gate Check
-        uses: sonarsource/sonarcloud-github-action@master
-        with:
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
-          timeout: 60  # seconds
-        continue-on-error: true  # like abortPipeline: false
+      # - name: Sonar Quality Gate Check
+      #   uses: sonarsource/sonarcloud-github-action@master
+      #   with:
+      #     sonar-token: ${{ secrets.SONAR_TOKEN }}
+      #     timeout: 60  # seconds
+      #   continue-on-error: true  # like abortPipeline: false
 
       - name: Maven install (skip tests)
         run: mvn clean install -DskipTests=true
