@@ -109,6 +109,19 @@ jobs:
 
       - name: Verify running container
         run: docker ps -f name=spring-bankapp
+      
+      - name: Deploy container to remote server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          script: |
+            docker pull sidraut007/spring-bankapp:${{ github.event.inputs.DOCKER_TAG }}
+            docker stop spring-bankapp || true
+            docker rm spring-bankapp || true
+            docker run -d --name spring-bankapp -p 8080:8080 sidraut007/spring-bankapp:${{ github.event.inputs.DOCKER_TAG }}
+
 
   # update-k8s-manifest:
   #   needs: docker-build-push
