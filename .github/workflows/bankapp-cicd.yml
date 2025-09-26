@@ -45,33 +45,11 @@ jobs:
       - name: Maven test (skip tests?)
         run: mvn test -DskipTests=true
 
-      # - name: SonarQube Scan
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #   run: |
-      #     # Install sonar-scanner CLI if needed
-      #     wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
-      #     unzip sonar-scanner-cli-4.8.0.2856-linux.zip
-      #     export PATH=$PWD/sonar-scanner-4.8.0.2856-linux/bin:$PATH
-
-      #     sonar-scanner \
-      #       -Dsonar.projectKey=bankapp \
-      #       -Dsonar.projectName=bankapp \
-      #       -Dsonar.java.binaries=target \
-      #       -Dsonar.login=$SONAR_TOKEN
-
-      # - name: Sonar Quality Gate Check
-      #   uses: sonarsource/sonarcloud-github-action@master
-      #   with:
-      #     sonar-token: ${{ secrets.SONAR_TOKEN }}
-      #     timeout: 60  # seconds
-      #   continue-on-error: true  # like abortPipeline: false
-
       - name: Maven install (skip tests)
         run: mvn clean install -DskipTests=true
 
   docker-build-push:
-    needs: build-test-scan
+    needs: build-test-package
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: sidraut007/spring-bankapp
@@ -93,34 +71,44 @@ jobs:
           context: .
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ env.TAG }}
-      
-      - name: Pull and run Docker container
+
+  deploy-to-remote:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Replace Docker tag in docker-compose.yml
         run: |
-          docker pull ${IMAGE_NAME}:${TAG}
+          sed -i "s|sidraut007/spring-bankapp:.*|sidraut007/spring-bankapp:${{ github.event.inputs.DOCKER_TAG }}|g" docker-compose.yml
 
-          # Stop any existing container with same name
-          if [ $(docker ps -q -f name=spring-bankapp) ]; then
-            docker stop spring-bankapp
-            docker rm spring-bankapp
-          fi
+      - name: Copy docker-compose and .env to remote
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          source: |
+            docker-compose.yml
+            .env
+          target: "~/bankapp"
 
-          # Run the container
-          docker run -d --name spring-bankapp -p 8080:8080 ${IMAGE_NAME}:${TAG}
-
-      - name: Verify running container
-        run: docker ps -f name=spring-bankapp
-      
-      - name: Deploy container to remote server
+      - name: Deploy via SSH using Docker Compose
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_SSH_KEY }}
           script: |
+            cd ~/bankapp
             docker pull sidraut007/spring-bankapp:${{ github.event.inputs.DOCKER_TAG }}
-            docker stop spring-bankapp || true
-            docker rm spring-bankapp || true
-            docker run -d --name spring-bankapp -p 8080:8080 sidraut007/spring-bankapp:${{ github.event.inputs.DOCKER_TAG }}
+            docker-compose down
+            docker-compose up -d
+
+            echo "Waiting for app to be healthy..."
+            sleep 20
 
 
   # update-k8s-manifest:
