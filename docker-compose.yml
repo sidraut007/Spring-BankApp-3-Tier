@@ -18,7 +18,7 @@ services:
       start_period: 30s
 
   mainapp:
-    image: sidraut007/spring-bankapp
+    image: sidraut007/spring-bankapp:blue
     container_name: Bankapp
     environment:
       - SPRING_DATASOURCE_USERNAME=root
