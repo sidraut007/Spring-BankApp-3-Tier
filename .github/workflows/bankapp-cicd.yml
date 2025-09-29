@@ -90,7 +90,7 @@ jobs:
           key: ${{ secrets.REMOTE_SSH_KEY }}
           source: |
             docker-compose.yml
-            .env
+           
           target: "~/bankapp"
 
       - name: Deploy via SSH using Docker Compose
