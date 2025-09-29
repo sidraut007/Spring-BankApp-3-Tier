@@ -11,10 +11,6 @@ on:
         options:
           - blue
           - green
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
 
 env:
   IMAGE_NAME: sidraut007/spring-bankapp
