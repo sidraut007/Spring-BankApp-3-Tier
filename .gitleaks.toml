@@ -1,0 +1,28 @@
+# Gitleaks configuration for secret detection
+title = "Bank App Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key ID"
+regex = '''AKIA[0-9A-Z]{16}'''
+
+[[rules]]
+id = "docker-hub-token"
+description = "Docker Hub Access Token"
+regex = '''dckr_pat_[a-zA-Z0-9_-]{36}'''
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey)['"]*\s*[:=]\s*['"][a-zA-Z0-9_-]{20,}['"]'''
+
+[allowlist]
+description = "Allowlist for false positives"
+paths = [
+    '''\.git/''',
+    '''target/''',
+    '''\.mvn/'''
+]

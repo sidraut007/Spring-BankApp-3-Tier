@@ -1,0 +1,54 @@
+# Multi-stage build for security and size optimization
+FROM eclipse-temurin:17-jdk-alpine AS builder
+
+# Create non-root user for build
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+# Set working directory
+WORKDIR /app
+
+# Copy only necessary files for dependency resolution
+COPY pom.xml .
+COPY src ./src
+
+# Install dependencies and build
+RUN mvn clean package -DskipTests=true
+
+# Production stage
+FROM eclipse-temurin:17-jre-alpine AS production
+
+# Security: Install security updates
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache dumb-init && \
+    rm -rf /var/cache/apk/*
+
+# Create non-root user
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup
+
+# Set working directory
+WORKDIR /app
+
+# Copy application from builder stage
+COPY --from=builder --chown=appuser:appgroup /app/target/*.jar app.jar
+
+# Security: Remove unnecessary packages and create read-only filesystem
+RUN chmod 444 app.jar
+
+# Switch to non-root user
+USER appuser
+
+# Security: Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
+
+# Expose port
+EXPOSE 8080
+
+# Run application
+CMD ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

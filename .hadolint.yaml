@@ -1,0 +1,10 @@
+# Hadolint configuration for Dockerfile linting
+ignored:
+  - DL3008  # Pin versions in apt get install (handled by base image)
+  - DL3009  # Delete the apt-get lists after installing (handled by base image)
+
+trustedRegistries:
+  - docker.io
+  - eclipse-temurin
+
+failure-threshold: warning
